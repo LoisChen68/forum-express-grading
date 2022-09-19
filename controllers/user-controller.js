@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs')
 const { User, Restaurant, Comment, Favorite, Like, Followship } = require('../models')
 const { imgurFileHandler } = require('../helpers/file-helpers')
+const { getUser } = require('../helpers/auth-helpers')
 const userController = {
   signUpPage: (req, res) => {
     res.render('signup')
@@ -37,18 +38,31 @@ const userController = {
     res.redirect('/signin')
   },
   getUser: (req, res, next) => {
-    return User.findByPk(req.params.id, {
-      include: [{ model: Comment, include: Restaurant }],
+    const reqUser = getUser(req)
+    const id = Number(req.params.id)
+    return User.findByPk(id, {
+      include: [
+        { model: Comment, include: Restaurant },
+        { all: true }
+      ],
       nest: true
     })
-      .then(user => {
-        if (!user) throw new Error("User didn't exist!")
-        res.render('users/profile', { user: user.toJSON() })
+      .then(targetUser => {
+        targetUser = targetUser.toJSON()
+        if (!targetUser) throw new Error("User didn't exist!")
+        const isFollowed = req.user.Followings.some(f => f.id === targetUser.id)
+        res.render('users/profile', { user: reqUser, reqUser, targetUser, isFollowed })
       })
       .catch(err => next(err))
   },
   editUser: (req, res, next) => {
-    return User.findByPk(req.params.id, {
+    const userId = getUser(req).id
+    const id = Number(req.params.id)
+    if (userId !== id) {
+      req.flash('error_messages', '不具有權限！')
+      return res.redirect('back')
+    }
+    return User.findByPk(id, {
       raw: true
     })
       .then(user => {
@@ -154,6 +168,7 @@ const userController = {
       .catch(err => next(err))
   },
   getTopUsers: (req, res, next) => {
+    const reqUser = getUser(req)
     return User.findAll({
       include: [{ model: User, as: 'Followers' }]
     })
@@ -165,7 +180,7 @@ const userController = {
             isFollowed: req.user.Followings.some(f => f.id === user.id)
           }))
           .sort((a, b) => b.followerCount - a.followerCount)
-        res.render('top-users', { users: result })
+        res.render('top-users', { users: result, reqUser })
       })
       .catch(err => next(err))
   },
