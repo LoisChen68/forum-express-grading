@@ -94,10 +94,11 @@ const adminController = {
   },
   putRestaurant: (req, res, next) => {
     const { name, tel, address, openingHours, description, categoryId } = req.body
+    const restaurantId = req.params.id
     if (!name) throw new Error('Restaurant name is required!')
     const { file } = req
     Promise.all([
-      Restaurant.findByPk(req.params.id),
+      Restaurant.findByPk(restaurantId),
       imgurFileHandler(file)
     ])
       .then(([restaurant, filePath]) => {
@@ -114,7 +115,7 @@ const adminController = {
       })
       .then(() => {
         req.flash('success_messages', 'restaurant was successfully to update')
-        res.redirect('/admin/restaurants')
+        res.redirect(`/admin/restaurants/${restaurantId}`)
       })
       .catch(err => next(err))
   },

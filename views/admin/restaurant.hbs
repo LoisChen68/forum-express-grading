@@ -21,3 +21,12 @@
   <hr>
 </div>
 <a class="btn btn-outline-secondary" href="javascript:history.back()">Back</a>
+<button type="button" class="btn btn-link">
+  <a class="btn btn-outline-primary" href="/admin/restaurants/{{restaurant.id}}/edit">
+    Edit
+  </a>
+</button>
+<form action="/admin/restaurants/{{restaurant.id}}?_method=DELETE" method="POST" style="display: inline;">
+  <button type="submit" class="btn btn-outline-danger"
+    onclick="return confirm(`確定要刪除 {{ restaurant.name }} 嗎？`)">Delete</button>
+</form>
