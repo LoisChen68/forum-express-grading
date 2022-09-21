@@ -1,5 +1,6 @@
 const { Restaurant, Category, Comment, User } = require('../models')
 const { sequelize } = require('../models')
+const { getUser } = require('../helpers/auth-helpers')
 const { getOffset, getPagination } = require('../helpers/pagination-helper')
 const restaurantController = {
   getRestaurants: (req, res, next) => {
@@ -54,7 +55,6 @@ const restaurantController = {
           isFavorited: favoritedRestaurantsId.includes(r.id),
           isLiked: likedRestaurantsId.includes(r.id)
         }))
-        // .sort((a, b) => b.CommentsCount - a.CommentsCount)
         const set = new Set()
         const result = data.filter(item => !set.has(item.id) ? set.add(item.id) : false)
         return res.render('restaurants', {
@@ -69,6 +69,7 @@ const restaurantController = {
       .catch(err => next(err))
   },
   getRestaurant: (req, res, next) => {
+    const reqUser = getUser(req)
     return Restaurant.findByPk(req.params.id, {
       include: [
         Category,
@@ -87,7 +88,8 @@ const restaurantController = {
         res.render('restaurant', {
           restaurant: restaurant.toJSON(),
           isFavorited,
-          isLiked
+          isLiked,
+          reqUser
         })
       })
       .catch(err => next(err))

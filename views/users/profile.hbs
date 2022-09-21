@@ -14,7 +14,7 @@
         {{#ifCond targetUser.id reqUser.id}}
         <a href="/users/{{targetUser.id}}/edit"><button type="button" class="btn btn-primary">edit</button></a>
         {{else}}
-        {{#if reqUser.isFollowed }}
+        {{#if isFollowed }}
         <form action="/following/{{targetUser.id}}?_method=DELETE" method="POST" style="display: contents;">
           <button type="submit" class="btn btn-danger">取消追蹤</button>
         </form>
@@ -64,7 +64,7 @@
       </div>
       <div class="card">
         <div class="card-header">
-          <b>{{FavoritedRestaurants.length}} 已收藏餐廳</b>
+          <b>{{targetUser.FavoritedRestaurants.length}} 已收藏餐廳</b>
         </div>
         <div class="card-body">
           {{#each targetUser.FavoritedRestaurants}}

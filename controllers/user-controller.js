@@ -17,6 +17,7 @@ const userController = {
       .then(hash => User.create({
         name: req.body.name,
         email: req.body.email,
+        image: `https://loremflickr.com/320/240/user,icon/?random=${Math.random() * 100}`,
         password: hash
       }))
       .then(() => {
@@ -61,6 +62,7 @@ const userController = {
       })
     ])
       .then(([targetUser, comments]) => {
+        console.log(reqUser)
         targetUser = targetUser.toJSON()
         if (!targetUser) throw new Error("User didn't exist!")
         const isFollowed = req.user.Followings.some(f => f.id === targetUser.id)
