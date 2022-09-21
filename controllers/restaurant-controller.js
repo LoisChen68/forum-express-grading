@@ -1,23 +1,46 @@
 const { Restaurant, Category, Comment, User } = require('../models')
+const { sequelize } = require('../models')
 const { getOffset, getPagination } = require('../helpers/pagination-helper')
 const restaurantController = {
   getRestaurants: (req, res, next) => {
+    const sortTab = [
+      {
+        name: '話題餐廳'
+      },
+      {
+        name: '熱門餐廳'
+      }
+    ]
+    const sortTabName = req.query.tab || ''
     const DEFAULT_LIMIT = 9
     const page = Number(req.query.page) || 1
     const limit = Number(req.query.limit) || DEFAULT_LIMIT
     const offset = getOffset(limit, page)
     const categoryId = Number(req.query.categoryId) || ''
-    return Promise.all([Restaurant.findAndCountAll({
-      include: Category,
-      where: {
-        ...categoryId ? { categoryId } : {}
-      },
-      limit,
-      offset,
-      nest: true,
-      raw: true
-    }),
-    Category.findAll({ raw: true })
+    return Promise.all([
+      Restaurant.findAndCountAll({
+        include: [
+          Category,
+          Comment
+        ],
+        where: {
+          ...categoryId ? { categoryId } : {}
+        },
+        // attributes: {
+        //   include: [
+        //     [sequelize.literal('(SELECT COUNT(*) FROM Comments WHERE restaurant_id = Restaurant.id )'), 'CommentsCount']
+        //   ]
+        // },
+        group: ['Restaurant.id'],
+        order: [
+          [sequelize.literal('(SELECT COUNT(user_id) FROM Comments WHERE restaurant_id = Restaurant.id )'), 'Desc']
+        ],
+        limit,
+        offset,
+        nest: true,
+        raw: true
+      }),
+      Category.findAll({ raw: true })
     ])
       .then(([restaurants, categories]) => {
         const favoritedRestaurantsId = req.user && req.user.FavoritedRestaurants.map(fr => fr.id)
@@ -28,11 +51,16 @@ const restaurantController = {
           isFavorited: favoritedRestaurantsId.includes(r.id),
           isLiked: likedRestaurantsId.includes(r.id)
         }))
+        // .sort((a, b) => b.CommentsCount - a.CommentsCount)
+        const set = new Set()
+        const result = data.filter(item => !set.has(item.id) ? set.add(item.id) : false)
         return res.render('restaurants', {
-          restaurants: data,
+          restaurants: result,
           categories,
           categoryId,
-          pagination: getPagination(limit, page, restaurants.count)
+          pagination: getPagination(limit, page, restaurants.count),
+          sortTab,
+          sortTabName
         })
       })
       .catch(err => next(err))
@@ -45,6 +73,7 @@ const restaurantController = {
         { model: User, as: 'FavoritedUsers' },
         { model: User, as: 'LikedUsers' }
       ],
+      order: [[Comment, 'created_at', 'Desc']],
       nest: true
     })
       .then(restaurant => {
@@ -113,6 +142,7 @@ const restaurantController = {
             isFavorited: req.user && req.user.FavoritedRestaurants.some(f => f.id === restaurant.id)
           }))
           .sort((a, b) => b.favoritedCount - a.favoritedCount)
+        console.log('req.result', result)
         return res.render('top-restaurants', { restaurants: result })
       })
       .catch(err => next(err))
