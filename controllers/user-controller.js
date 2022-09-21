@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs')
-const { User, Restaurant, Comment, Favorite, Like, Followship } = require('../models')
+const { User, Restaurant, Favorite, Like, Comment, Followship } = require('../models')
 const { imgurFileHandler } = require('../helpers/file-helpers')
 const { getUser } = require('../helpers/auth-helpers')
 const userController = {
@@ -40,18 +40,37 @@ const userController = {
   getUser: (req, res, next) => {
     const reqUser = getUser(req)
     const id = Number(req.params.id)
-    return User.findByPk(id, {
-      include: [
-        { model: Comment, include: Restaurant },
-        { all: true }
-      ],
-      nest: true
-    })
-      .then(targetUser => {
+    return Promise.all([
+      User.findByPk(id, (
+        {
+          include:
+            [
+              { model: User, as: 'Followers' },
+              { model: User, as: 'Followings' },
+              { model: Restaurant, as: 'FavoritedRestaurants' }
+            ]
+        }
+      )),
+      Comment.findAll({
+        include: Restaurant,
+        where: { userId: id },
+        attributes: ['restaurantId'],
+        group: 'restaurantId',
+        raw: true,
+        nest: true
+      })
+    ])
+      .then(([targetUser, comments]) => {
         targetUser = targetUser.toJSON()
         if (!targetUser) throw new Error("User didn't exist!")
         const isFollowed = req.user.Followings.some(f => f.id === targetUser.id)
-        res.render('users/profile', { user: reqUser, reqUser, targetUser, isFollowed })
+        res.render('users/profile', {
+          user: reqUser,
+          reqUser,
+          targetUser,
+          isFollowed,
+          comments
+        })
       })
       .catch(err => next(err))
   },

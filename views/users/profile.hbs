@@ -7,14 +7,14 @@
       <div class="card-body">
         <h5 class="card-title">{{targetUser.name}}</h5>
         <p class="card-text">{{targetUser.email}}</p>
-        <b>{{targetUser.Comments.length}} 已評論餐廳</b><br>
+        <b>{{comments.length}} 已評論餐廳</b><br>
         <b>{{targetUser.FavoritedRestaurants.length}} 收藏的餐廳</b><br>
         <b>{{targetUser.Followings.length}} followings(追蹤者)</b><br>
         <p><b>{{targetUser.Followers.length}} followers(追隨者)</b></p>
         {{#ifCond targetUser.id reqUser.id}}
         <a href="/users/{{targetUser.id}}/edit"><button type="button" class="btn btn-primary">edit</button></a>
         {{else}}
-        {{#if isFollowed }}
+        {{#if reqUser.isFollowed }}
         <form action="/following/{{targetUser.id}}?_method=DELETE" method="POST" style="display: contents;">
           <button type="submit" class="btn btn-danger">取消追蹤</button>
         </form>
@@ -54,17 +54,17 @@
   <div class="col-sm-8">
     <div class="card">
       <div class="card-header">
-        <b>{{targetUser.Comments.length}} 已評論餐廳</b>
+        <b>{{comments.length}} 已評論餐廳</b>
       </div>
       <div class="card-body">
-        {{#each targetUser.Comments}}
+        {{#each comments}}
         <a href="/restaurants/{{this.Restaurant.id}}"><img src="{{this.Restaurant.image}}" alt="" width="10%"
             height="10%"></a>
         {{/each}}
       </div>
       <div class="card">
         <div class="card-header">
-          <b>{{targetUser.FavoritedRestaurants.length}} 已收藏餐廳</b>
+          <b>{{FavoritedRestaurants.length}} 已收藏餐廳</b>
         </div>
         <div class="card-body">
           {{#each targetUser.FavoritedRestaurants}}
