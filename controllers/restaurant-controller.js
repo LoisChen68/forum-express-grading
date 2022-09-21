@@ -26,14 +26,17 @@ const restaurantController = {
         where: {
           ...categoryId ? { categoryId } : {}
         },
-        // attributes: {
-        //   include: [
-        //     [sequelize.literal('(SELECT COUNT(*) FROM Comments WHERE restaurant_id = Restaurant.id )'), 'CommentsCount']
-        //   ]
-        // },
-        group: ['Restaurant.id'],
+        attributes: {
+          include: [
+            [
+              sequelize.literal(
+                '(SELECT COUNT(*) FROM Comments WHERE restaurant_id = Restaurant.id )'
+              ), 'CommentsCount'
+            ]
+          ]
+        },
         order: [
-          [sequelize.literal('(SELECT COUNT(user_id) FROM Comments WHERE restaurant_id = Restaurant.id )'), 'Desc']
+          [sequelize.literal('CommentsCount'), 'Desc']
         ],
         limit,
         offset,
