@@ -18,7 +18,8 @@
       <td>{{#if this.isAdmin}}admin{{else}}user{{/if}}</td>
       <td>
         <form action="/admin/users/{{this.id}}?_method=PATCH" method="POST">
-          <button type="submit" class="btn btn-link">
+          <button type="submit" class="btn btn-link"
+            onclick="return confirm(`確定要更改為{{#if this.isAdmin}}admin{{else}}user{{/if}}嗎?`)">
             {{#if this.isAdmin}}set as user{{else}}set as admin{{/if}}
           </button>
         </form>
