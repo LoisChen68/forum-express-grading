@@ -41,23 +41,27 @@
 {{!-- Comment --}}
 <h3 class="mb-3">所有評論：</h3>
 {{#each restaurant.Comments}}
-{{#if ../user.isAdmin}}
-<form action="/comments/{{this.id}}?_method=DELETE" method="POST" class="float-end">
-  <button type="submit" class="btn btn-danger">Delete</button>
-</form>
-{{/if}}
-{{#ifCond userId ../reqUser.id}}
-<button type="button" class="btn btn-link row d-flex justify-content-end">
-  <a class="btn btn-outline-primary" href="/comments/{{this.id}}/edit">
-    Edit
-  </a>
-</button>
-{{/ifCond}}
-<blockquote class="blockquote mb-0">
-  <h4><a href="/users/{{this.User.id}}">{{this.User.name}}</a></h4>
-  <p>{{this.text}}</p>
-  <footer class="blockquote-footer">{{relativeTimeFromNow this.createdAt}}</footer>
-</blockquote>
+<div class="d-flex justify-content-between">
+  <blockquote class="blockquote mb-0">
+    <h4><a href="/users/{{this.User.id}}">{{this.User.name}}</a></h4>
+    <p>{{this.text}}</p>
+    <footer class="blockquote-footer">{{relativeTimeFromNow this.createdAt}}</footer>
+  </blockquote>
+  <div class="d-flex">
+    {{#ifCond userId ../reqUser.id}}
+    <button type="button" class="btn btn-link">
+      <a class="btn btn-outline-primary" href="/comments/{{this.id}}/edit">
+        Edit
+      </a>
+    </button>
+    {{/ifCond}}
+    {{#if ../user.isAdmin}}
+    <form action="/comments/{{this.id}}?_method=DELETE" method="POST" class="align-items-center d-flex">
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+    {{/if}}
+  </div>
+</div>
 <hr />
 {{/each}}
 <form action="/comments" method="POST">
