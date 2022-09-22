@@ -137,16 +137,24 @@ const restaurantController = {
   getTopRestaurants: (req, res, next) => {
     return Restaurant.findAll({
       limit: 10,
-      include: [{ model: User, as: 'FavoritedUsers' }]
+      attributes: {
+        include: [
+          [
+            sequelize.literal(
+              '(SELECT COUNT(*) FROM Favorites AS FavoritedUsers WHERE restaurant_id = Restaurant.id )'
+            ), 'FavoritedCount'
+          ]
+        ]
+      },
+      order: [
+        [sequelize.literal('FavoritedCount'), 'Desc']
+      ]
     })
       .then(restaurants => {
         const result = restaurants
           .map(restaurant => ({
-            ...restaurant.toJSON(),
-            favoritedCount: restaurant.FavoritedUsers.length,
-            isFavorited: req.user && req.user.FavoritedRestaurants.some(f => f.id === restaurant.id)
+            ...restaurant.toJSON()
           }))
-          .sort((a, b) => b.favoritedCount - a.favoritedCount)
         return res.render('top-restaurants', { restaurants: result })
       })
       .catch(err => next(err))
