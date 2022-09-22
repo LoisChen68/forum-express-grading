@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs')
-const { User, Restaurant, Comment, Favorite, Like, Followship } = require('../models')
+const { User, Restaurant, Favorite, Like, Comment, Followship } = require('../models')
 const { imgurFileHandler } = require('../helpers/file-helpers')
+const { getUser } = require('../helpers/auth-helpers')
 const userController = {
   signUpPage: (req, res) => {
     res.render('signup')
@@ -16,6 +17,7 @@ const userController = {
       .then(hash => User.create({
         name: req.body.name,
         email: req.body.email,
+        image: `https://loremflickr.com/320/240/user,icon/?random=${Math.random() * 100}`,
         password: hash
       }))
       .then(() => {
@@ -37,18 +39,51 @@ const userController = {
     res.redirect('/signin')
   },
   getUser: (req, res, next) => {
-    return User.findByPk(req.params.id, {
-      include: [{ model: Comment, include: Restaurant }],
-      nest: true
-    })
-      .then(user => {
-        if (!user) throw new Error("User didn't exist!")
-        res.render('users/profile', { user: user.toJSON() })
+    const reqUser = getUser(req)
+    const id = Number(req.params.id)
+    return Promise.all([
+      User.findByPk(id, (
+        {
+          include:
+            [
+              { model: User, as: 'Followers' },
+              { model: User, as: 'Followings' },
+              { model: Restaurant, as: 'FavoritedRestaurants' }
+            ]
+        }
+      )),
+      Comment.findAll({
+        include: Restaurant,
+        where: { userId: id },
+        attributes: ['restaurantId'],
+        group: 'restaurantId',
+        raw: true,
+        nest: true
+      })
+    ])
+      .then(([targetUser, comments]) => {
+        console.log(reqUser)
+        targetUser = targetUser.toJSON()
+        if (!targetUser) throw new Error("User didn't exist!")
+        const isFollowed = req.user.Followings.some(f => f.id === targetUser.id)
+        res.render('users/profile', {
+          user: reqUser,
+          reqUser,
+          targetUser,
+          isFollowed,
+          comments
+        })
       })
       .catch(err => next(err))
   },
   editUser: (req, res, next) => {
-    return User.findByPk(req.params.id, {
+    const userId = getUser(req).id
+    const id = Number(req.params.id)
+    if (userId !== id) {
+      req.flash('error_messages', '不具有權限！')
+      return res.redirect('back')
+    }
+    return User.findByPk(id, {
       raw: true
     })
       .then(user => {
@@ -154,6 +189,7 @@ const userController = {
       .catch(err => next(err))
   },
   getTopUsers: (req, res, next) => {
+    const reqUser = getUser(req)
     return User.findAll({
       include: [{ model: User, as: 'Followers' }]
     })
@@ -165,7 +201,7 @@ const userController = {
             isFollowed: req.user.Followings.some(f => f.id === user.id)
           }))
           .sort((a, b) => b.followerCount - a.followerCount)
-        res.render('top-users', { users: result })
+        res.render('top-users', { users: result, reqUser })
       })
       .catch(err => next(err))
   },

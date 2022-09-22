@@ -30,6 +30,29 @@ const commentController = {
       })
       .then(deletedComment => res.redirect(`/restaurants/${deletedComment.restaurantId}`))
       .catch(err => next(err))
+  },
+  editComment: (req, res, next) => {
+    return Comment.findByPk(req.params.id, { raw: true })
+      .then(comment => {
+        if (!comment) throw new Error("Comment didn't exist!")
+        res.render('edit-comment', comment)
+      })
+      .catch(err => next(err))
+  },
+  putComment: (req, res, next) => {
+    const { restaurantId, text } = req.body
+    return Comment.findByPk(req.params.id)
+      .then(comment => {
+        if (!comment) throw new Error("Comment didn't exist!")
+        return comment.update({
+          text
+        })
+      })
+      .then(() => {
+        req.flash('success_messages', 'comment was successfully to update')
+        res.redirect(`/restaurants/${restaurantId}`)
+      })
+      .catch(err => next(err))
   }
 }
 module.exports = commentController

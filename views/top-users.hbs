@@ -15,6 +15,8 @@
     <h2>{{this.name}}</h2>
     <span class="bg-secondary badge">追蹤人數：{{this.followerCount}}</span>
     <p>
+      {{#ifCond this.id../reqUser.id}}
+      {{else}}
       {{#if this.isFollowed }}
     <form action="/following/{{this.id}}?_method=DELETE" method="POST" style="display: contents;">
       <button type="submit" class="btn btn-danger">取消追蹤</button>
@@ -24,6 +26,7 @@
       <button type="submit" class="btn btn-primary">追蹤</button>
     </form>
     {{/if}}
+    {{/ifCond}}
     </p>
   </div>
   {{/each}}
