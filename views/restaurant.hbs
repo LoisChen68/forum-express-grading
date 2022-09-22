@@ -57,7 +57,7 @@
     {{/ifCond}}
     {{#if ../user.isAdmin}}
     <form action="/comments/{{this.id}}?_method=DELETE" method="POST" class="align-items-center d-flex">
-      <button type="submit" class="btn btn-danger">Delete</button>
+      <button type="submit" class="btn btn-danger" onclick="return confirm(`確定要刪除這則評論嗎？`)">Delete</button>
     </form>
     {{/if}}
   </div>
