@@ -151,9 +151,11 @@ const restaurantController = {
       ]
     })
       .then(restaurants => {
+        const favoritedRestaurantsId = req.user && req.user.FavoritedRestaurants.map(fr => fr.id)
         const result = restaurants
           .map(restaurant => ({
-            ...restaurant.toJSON()
+            ...restaurant.toJSON(),
+            isFavorited: favoritedRestaurantsId.includes(restaurant.id)
           }))
         return res.render('top-restaurants', { restaurants: result })
       })
