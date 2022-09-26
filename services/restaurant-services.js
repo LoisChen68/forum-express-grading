@@ -1,4 +1,4 @@
-const { Restaurant, Category, sequelize } = require('../models')
+const { Restaurant, Category, sequelize, Comment } = require('../models')
 const { getOffset, getPagination } = require('../helpers/pagination-helper')
 const restaurantServices = {
   getRestaurants: (req, cb) => {
@@ -45,8 +45,8 @@ const restaurantServices = {
       Category.findAll({ raw: true })
     ])
       .then(([restaurants, categories]) => {
-        const favoritedRestaurantsId = req.user && req.user.FavoritedRestaurants.map(fr => fr.id)
-        const likedRestaurantsId = req.user && req.user.LikedRestaurants.map(fr => fr.id)
+        const favoritedRestaurantsId = req.user?.FavoritedRestaurants ? req.user.FavoritedRestaurants.map(fr => fr.id) : []
+        const likedRestaurantsId = req.user?.LikedRestaurants ? req.user.LikedRestaurants.map(lr => lr.id) : []
         const data = restaurants.rows.map(r => ({
           ...r,
           description: r.description.substring(0, 50),
