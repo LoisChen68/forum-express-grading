@@ -28,7 +28,8 @@ const adminController = {
   },
 
   getRestaurants: (req, res, next) => {
-    adminServices.getRestaurants(req, (err, data) => err ? next(err) : res.render('admin/restaurants', data))
+    // adminServices.getRestaurants(req, (err, data) => err ? next(err) : res.render('admin/restaurants', data))
+    adminServices.getRestaurants(req, (err, data) => err ? next(err) : console.log(data))
   },
 
   createRestaurant: (req, res, next) => {
