@@ -1,36 +1,12 @@
 const { Restaurant, Category, Comment, User } = require('../../models')
 const restaurantServices = require('../../services/restaurant-services')
 const { sequelize } = require('../../models')
-const { getUser } = require('../../helpers/auth-helpers')
 const restaurantController = {
   getRestaurants: (req, res, next) => {
     restaurantServices.getRestaurants(req, (err, data) => err ? next(err) : res.render('restaurants', data))
   },
   getRestaurant: (req, res, next) => {
-    const reqUser = getUser(req)
-    return Restaurant.findByPk(req.params.id, {
-      include: [
-        Category,
-        { model: Comment, include: User },
-        { model: User, as: 'FavoritedUsers' },
-        { model: User, as: 'LikedUsers' }
-      ],
-      order: [[Comment, 'created_at', 'Desc']],
-      nest: true
-    })
-      .then(restaurant => {
-        const isFavorited = restaurant.FavoritedUsers.some(f => f.id === req.user.id)
-        const isLiked = restaurant.LikedUsers.some(f => f.id === req.user.id)
-        if (!restaurant) throw new Error("Restaurant didn't exist!")
-        restaurant.increment('viewCounts')
-        res.render('restaurant', {
-          restaurant: restaurant.toJSON(),
-          isFavorited,
-          isLiked,
-          reqUser
-        })
-      })
-      .catch(err => next(err))
+    restaurantServices.getRestaurant(req, (err, data) => err ? next(err) : res.render('restaurant', data))
   },
   getDashboard: (req, res, next) => {
     return Restaurant.findByPk(req.params.id, {

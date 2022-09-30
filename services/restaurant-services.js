@@ -1,5 +1,6 @@
-const { Restaurant, Category, sequelize, Comment } = require('../models')
+const { Restaurant, Category, sequelize, Comment, User } = require('../models')
 const { getOffset, getPagination } = require('../helpers/pagination-helper')
+const { getUser } = require('../helpers/auth-helpers')
 const restaurantServices = {
   getRestaurants: (req, cb) => {
     const sortTab = [
@@ -62,6 +63,32 @@ const restaurantServices = {
           pagination: getPagination(limit, page, restaurants.count),
           sortTab,
           sortTabName
+        })
+      })
+      .catch(err => cb(err))
+  },
+  getRestaurant: (req, cb) => {
+    const reqUser = getUser(req)
+    return Restaurant.findByPk(req.params.id, {
+      include: [
+        Category,
+        { model: Comment, include: User },
+        { model: User, as: 'FavoritedUsers' },
+        { model: User, as: 'LikedUsers' }
+      ],
+      order: [[Comment, 'created_at', 'Desc']],
+      nest: true
+    })
+      .then(restaurant => {
+        const isFavorited = restaurant.FavoritedUsers.some(f => f.id === req.user.id)
+        const isLiked = restaurant.LikedUsers.some(f => f.id === req.user.id)
+        if (!restaurant) throw new Error("Restaurant didn't exist!")
+        restaurant.increment('viewCounts')
+        return cb(null, {
+          restaurant: restaurant.toJSON(),
+          isFavorited,
+          isLiked,
+          reqUser
         })
       })
       .catch(err => cb(err))
