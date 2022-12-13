@@ -40,7 +40,7 @@ const commentController = {
       .catch(err => next(err))
   },
   putComment: (req, res, next) => {
-    const { restaurantId, text } = req.body
+    const { text } = req.body
     return Comment.findByPk(req.params.id)
       .then(comment => {
         if (!comment) throw new Error("Comment didn't exist!")
@@ -48,9 +48,9 @@ const commentController = {
           text
         })
       })
-      .then(() => {
+      .then(comment => {
         req.flash('success_messages', 'comment was successfully to update')
-        res.redirect(`/restaurants/${restaurantId}`)
+        res.redirect(`/restaurants/${comment.restaurantId}`)
       })
       .catch(err => next(err))
   }
