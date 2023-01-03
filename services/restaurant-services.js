@@ -92,6 +92,58 @@ const restaurantServices = {
         })
       })
       .catch(err => cb(err))
+  },
+  getTopRestaurants: (req, cb) => {
+    return Restaurant.findAll({
+      limit: 10,
+      attributes: {
+        include: [
+          [
+            sequelize.literal(
+              '(SELECT COUNT(*) FROM Favorites AS FavoritedUsers WHERE restaurant_id = Restaurant.id )'
+            ), 'FavoritedCount'
+          ]
+        ]
+      },
+      order: [
+        [sequelize.literal('FavoritedCount'), 'Desc']
+      ]
+    })
+      .then(restaurants => {
+        const favoritedRestaurantsId = req.user && req.user.FavoritedRestaurants.map(fr => fr.id)
+        const result = restaurants
+          .map(restaurant => ({
+            ...restaurant.toJSON(),
+            isFavorited: favoritedRestaurantsId.includes(restaurant.id)
+          }))
+        return cb(null, { restaurants: result })
+      })
+      .catch(err => cb(err))
+  },
+  getFeeds: (req, cb) => {
+    return Promise.all([
+      Restaurant.findAll({
+        limit: 10,
+        order: [['createdAt', 'DESC']],
+        include: [Category],
+        raw: true,
+        nest: true
+      }),
+      Comment.findAll({
+        limit: 10,
+        order: [['createdAt', 'DESC']],
+        include: [User, Restaurant],
+        raw: true,
+        nest: true
+      })
+    ])
+      .then(([restaurants, comments]) => {
+        cb(null, {
+          restaurants,
+          comments
+        })
+      })
+      .catch(err => cb(err))
   }
 }
 module.exports = restaurantServices
