@@ -39,7 +39,10 @@ const adminServices = {
         }
         return restaurant.destroy()
       })
-      .then(deletedRestaurant => cb(null, { restaurant: deletedRestaurant }))
+      .then(deletedRestaurant => cb(null, {
+        message: '刪除成功',
+        restaurant: deletedRestaurant
+      }))
       .catch(err => cb(err))
   },
   createRestaurant: (req, cb) => {
@@ -110,6 +113,7 @@ const adminServices = {
     return User.findByPk(req.params.id)
       .then(user => {
         if (!user) throw new Error("User didn't exist!")
+        if (user.email === 'root@example.com') throw new Error('禁止變更 root 權限')
         if (user.email === 'root@example.com') {
           req.flash('error_messages', '禁止變更 root 權限')
           return
@@ -119,7 +123,7 @@ const adminServices = {
         user.update({ isAdmin: !user.isAdmin })
       })
       .then(() => {
-        cb(null)
+        cb(null, '使用者權限變更成功')
       })
       .catch(err => cb(err))
   }
