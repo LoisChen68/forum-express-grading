@@ -1,15 +1,19 @@
-const { Restaurant, Category, User } = require('../models')
+const { Restaurant, Category, User, Comment } = require('../models')
 const { imgurFileHandler } = require('../helpers/file-helpers')
 const adminServices = {
   getRestaurants: (req, cb) => {
     Restaurant.findAll({
-      raw: true,
-      nest: true,
       include: [Category]
     })
-
-      .then(restaurants => cb(null, { restaurants }))
-
+      .then(restaurants => {
+        const result =
+          restaurants.map(restaurant => {
+            const { Category, ...data } = restaurant.toJSON()
+            data.categoryName = Category.name
+            return data
+          })
+        cb(null, { restaurants: result })
+      })
       .catch(err => cb(err))
   },
   postRestaurant: (req, cb) => {
@@ -26,11 +30,15 @@ const adminServices = {
         image: filePath || null,
         categoryId
       }))
-      .then(newRestaurant => cb(null, { restaurant: newRestaurant }))
+      .then(newRestaurant => cb(null, {
+        states: 'success',
+        restaurant: newRestaurant
+      }))
       .catch(err => cb(err))
   },
   deleteRestaurant: (req, cb) => {
-    Restaurant.findByPk(req.params.id)
+    const restaurantId = req.params.id
+    Restaurant.findByPk(restaurantId)
       .then(restaurant => {
         if (!restaurant) {
           const err = new Error("Restaurant didn't exist!")
@@ -40,9 +48,14 @@ const adminServices = {
         return restaurant.destroy()
       })
       .then(deletedRestaurant => cb(null, {
+        status: 'success',
         message: '刪除成功',
         restaurant: deletedRestaurant
       }))
+      // 刪除關聯的餐廳評論
+      .then(() => {
+        Comment.destroy({ where: { restaurantId: restaurantId } })
+      })
       .catch(err => cb(err))
   },
   createRestaurant: (req, cb) => {
@@ -60,7 +73,9 @@ const adminServices = {
     })
       .then(restaurant => {
         if (!restaurant) throw new Error("Restaurant didn't exist!")
-        cb(null, { restaurant })
+        const { Category, ...data } = restaurant
+        data.categoryName = Category.name
+        cb(null, { restaurant: data })
       })
       .catch(err => cb(err))
   },
@@ -97,7 +112,7 @@ const adminServices = {
         })
       })
       .then(restaurant => {
-        cb(null, { restaurant })
+        cb(null, { status: 'success', restaurant })
       })
       .catch(err => cb(err))
   },
@@ -114,16 +129,16 @@ const adminServices = {
       .then(user => {
         if (!user) throw new Error("User didn't exist!")
         if (user.email === 'root@example.com') throw new Error('禁止變更 root 權限')
-        if (user.email === 'root@example.com') {
-          req.flash('error_messages', '禁止變更 root 權限')
-          return
-        } else {
-          req.flash('success_messages', '使用者權限變更成功')
-        }
+        const res = user.isAdmin
         user.update({ isAdmin: !user.isAdmin })
+        return res
       })
-      .then(() => {
-        cb(null, '使用者權限變更成功')
+      .then(res => {
+        if (res) {
+          cb(null, { status: 'success', message: '權限變更為admin' })
+        } else {
+          cb(null, { status: 'success', message: '權限變更為user' })
+        }
       })
       .catch(err => cb(err))
   }

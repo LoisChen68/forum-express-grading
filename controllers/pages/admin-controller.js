@@ -41,6 +41,12 @@ const adminController = {
   patchUser: (req, res, next) => {
     adminServices.patchUser(req, (err, data) => {
       if (err) return next(err)
+      if (data.email === 'root@example.com') {
+        req.flash('error_messages', '禁止變更 root 權限')
+        return
+      } else {
+        req.flash('success_messages', '使用者權限變更成功')
+      }
       return res.redirect('/admin/users')
     })
   }
