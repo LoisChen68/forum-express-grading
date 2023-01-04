@@ -1,7 +1,7 @@
 <div class="row mb-5">
   <div class="col-md-12">
     <h1>{{restaurant.name}}</h1>
-    <p>[{{restaurant.Category.name}}]</p>
+    <p>[{{restaurant.categoryName}}]</p>
   </div>
   <div class="col-md-4">
     <img class="img-responsive center-block mb-5" src="{{restaurant.image}}"
@@ -17,7 +17,7 @@
   <div class="col-md-8">
     <p style="white-space: break-spaces;">{{restaurant.description}}</p>
     <a class="btn btn-primary" href="/restaurants/{{restaurant.id}}/dashboard">Dashboard</a>
-    {{#if isFavorited }}
+    {{#if restaurant.isFavorited }}
     <form action="/favorite/{{restaurant.id}}?_method=DELETE" method="POST" style="display: contents;">
       <button type="submit" class="btn btn-danger">移除最愛</button>
     </form>
@@ -26,7 +26,7 @@
       <button type="submit" class="btn btn-primary">加到最愛</button>
     </form>
     {{/if}}
-    {{#if isLiked }}
+    {{#if restaurant.isLiked }}
     <form action="/like/{{restaurant.id}}?_method=DELETE" method="POST" style="display: contents;">
       <button type="submit" class="btn btn-danger"><i class="fa-solid fa-heart"></i></button>
     </form>

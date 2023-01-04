@@ -17,9 +17,7 @@ const commentController = {
           userId
         })
       })
-      .then(data => {
-        cb(null, data)
-      })
+      .then(comment => cb(null, { status: 'success', comment }))
       .catch(err => cb(err))
   },
   deleteComment: (req, cb) => {
@@ -28,7 +26,11 @@ const commentController = {
         if (!comment) throw new Error("Comment didn't exist!'")
         return comment.destroy()
       })
-      .then(data => cb(null, data))
+      .then(deleteComment => cb(null, {
+        status: 'success',
+        message: '刪除成功',
+        comment: deleteComment
+      }))
       .catch(err => cb(err))
   },
   editComment: (req, cb) => {
@@ -48,9 +50,9 @@ const commentController = {
           text
         })
       })
-      .then(data => {
+      .then(comment => {
         req.flash('success_messages', 'comment was successfully to update')
-        cb(null, data)
+        cb(null, { status: 'success', comment })
       })
       .catch(err => cb(err))
   }

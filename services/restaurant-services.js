@@ -1,6 +1,5 @@
 const { Restaurant, Category, sequelize, Comment, User } = require('../models')
 const { getOffset, getPagination } = require('../helpers/pagination-helper')
-const { getUser } = require('../helpers/auth-helpers')
 const restaurantServices = {
   getRestaurants: (req, cb) => {
     const sortTab = [
@@ -68,28 +67,29 @@ const restaurantServices = {
       .catch(err => cb(err))
   },
   getRestaurant: (req, cb) => {
-    const reqUser = getUser(req)
     return Restaurant.findByPk(req.params.id, {
       include: [
         Category,
-        { model: Comment, include: User },
+        {
+          model: Comment,
+          include: {
+            model: User,
+            attributes: { exclude: ['password', 'createdAt', 'updatedAt'] }
+          }
+        },
         { model: User, as: 'FavoritedUsers' },
         { model: User, as: 'LikedUsers' }
       ],
-      order: [[Comment, 'created_at', 'Desc']],
-      nest: true
+      order: [[Comment, 'created_at', 'Desc']]
     })
       .then(restaurant => {
-        const isFavorited = restaurant.FavoritedUsers.some(f => f.id === req.user.id)
-        const isLiked = restaurant.LikedUsers.some(f => f.id === req.user.id)
+        const { Category, FavoritedUsers, LikedUsers, ...data } = restaurant.toJSON()
+        data.isFavorited = restaurant.FavoritedUsers.some(f => f.id === req.user.id)
+        data.isLiked = restaurant.LikedUsers.some(f => f.id === req.user.id)
+        data.categoryName = Category.name
         if (!restaurant) throw new Error("Restaurant didn't exist!")
         restaurant.increment('viewCounts')
-        return cb(null, {
-          restaurant: restaurant.toJSON(),
-          isFavorited,
-          isLiked,
-          reqUser
-        })
+        return cb(null, { restaurant: data })
       })
       .catch(err => cb(err))
   },
@@ -132,14 +132,26 @@ const restaurantServices = {
       Comment.findAll({
         limit: 10,
         order: [['createdAt', 'DESC']],
-        include: [User, Restaurant],
+        include: [
+          {
+            model: User,
+            attributes: { exclude: ['password', 'createdAt', 'updatedAt'] }
+          },
+          { model: Restaurant, attributes: ['name'] }
+        ],
         raw: true,
         nest: true
       })
     ])
       .then(([restaurants, comments]) => {
-        cb(null, {
-          restaurants,
+        const restaurantsResult =
+          restaurants.map(restaurant => {
+            const { Category, ...data } = restaurant
+            data.categoryName = Category.name
+            return data
+          })
+        return cb(null, {
+          restaurants: restaurantsResult,
           comments
         })
       })

@@ -121,10 +121,7 @@ const userServices = {
     const { restaurantId } = req.params
     const userId = req.user.id
     return Like.findOrCreate({ where: { userId, restaurantId } })
-      .then(like => {
-        if (like) throw new Error('You have liked this restaurant!')
-        cb(null)
-      })
+      .then(() => cb(null))
       .catch(err => cb(err))
   },
   removeLike: (req, cb) => {
