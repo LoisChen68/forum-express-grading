@@ -2,7 +2,7 @@
 <h1>美食達人</h1>
 <hr />
 <div class="row" style="text-align: center;">
-  {{#each users}}
+  {{#each result}}
   <div class="col-3">
     <a href="/users/{{this.id}}">
       {{#if this.image}}
@@ -15,7 +15,7 @@
     <h2>{{this.name}}</h2>
     <span class="bg-secondary badge">追蹤人數：{{this.followerCount}}</span>
     <p>
-      {{#ifCond this.id../reqUser.id}}
+      {{#ifCond this.id../reqUserId}}
       {{else}}
       {{#if this.isFollowed }}
     <form action="/following/{{this.id}}?_method=DELETE" method="POST" style="display: contents;">

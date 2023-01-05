@@ -4,6 +4,7 @@ const { getUser } = require('../helpers/auth-helpers')
 const { imgurFileHandler } = require('../helpers/file-helpers')
 
 const userServices = {
+  // POST sign
   signUp: (req, cb) => {
     if (req.body.password !== req.body.passwordCheck) throw new Error('Passwords do not match!')
 
@@ -21,11 +22,77 @@ const userServices = {
       .then(newUser => cb(null, { user: newUser }))
       .catch(err => cb(err))
   },
+  // GET users/:id/favorite
+  getUserFavoritedRestaurants: (req, cb) => {
+    const id = req.params.id
+    User.findByPk(id, {
+      include: [{
+        model: Restaurant,
+        as: 'FavoritedRestaurants'
+      }]
+    })
+      .then(user => {
+        const result = user.FavoritedRestaurants.map(restaurant => {
+          const { Favorite, ...data } = restaurant.toJSON()
+          return data
+        })
+        cb(null, result)
+      })
+      .catch(err => cb(err))
+  },
+  // GET users/:id/comment
+  getUserCommentedRestaurants: (req, cb) => {
+    const id = req.params.id
+    User.findByPk(id, {
+      include: [{ model: Comment, include: Restaurant }]
+    })
+      .then(user => {
+        const result = user.Comments.map(comment => {
+          const { Restaurant, ...data } = comment.toJSON()
+          data.restaurantName = Restaurant.name
+          return data
+        })
+        cb(null, result)
+      })
+      .catch(err => cb(err))
+  },
+  // GET users/:id/following
+  getUserFollowings: (req, cb) => {
+    const id = req.params.id
+    User.findByPk(id, {
+      include: [{ model: User, as: 'Followings' }]
+    })
+      .then(user => {
+        const result = user.Followings.map(following => {
+          const { Followship, ...data } = following.toJSON()
+          return data
+        })
+        cb(null, result)
+      })
+      .catch(err => cb(null, err))
+  },
+  // GET users/:id/follower
+  getUserFollowers: (req, cb) => {
+    const id = req.params.id
+    User.findByPk(id, {
+      include: [{ model: User, as: 'Followers' }]
+    })
+      .then(user => {
+        const result = user.Followers.map(follower => {
+          const { Followship, ...data } = follower.toJSON()
+          return data
+        })
+        cb(null, result)
+      })
+      .catch(err => cb(null, err))
+  },
+  // GET users/:id
   getUser: (req, cb) => {
     const reqUser = getUser(req)
     const id = Number(req.params.id)
     return Promise.all([
       User.findByPk(id, (
+        { attributes: { exclude: ['password'] } },
         {
           include:
             [
@@ -58,12 +125,16 @@ const userServices = {
       })
       .catch(err => cb(err))
   },
+  // PUT users/:id
   putUser: (req, cb) => {
     const userId = getUser(req).id
+    const id = req.params.id
     const { name } = req.body
     const { file } = req
     return Promise.all([
-      User.findByPk(req.params.id),
+      User.findByPk(id, {
+        attributes: { exclude: ['password', 'createdAt', 'updatedAt'] }
+      }),
       imgurFileHandler(file)
     ])
       .then(([user, filePath]) => {
@@ -74,11 +145,16 @@ const userServices = {
           image: filePath || user.image
         })
       })
-      .then(data => {
-        cb(null, data)
+      .then(user => {
+        cb(null, {
+          status: 'success',
+          message: '成功修改個人資料',
+          user
+        })
       })
       .catch(err => cb(err))
   },
+  // POST favorite/:restaurantId
   addFavorite: (req, cb) => {
     const { restaurantId } = req.params
     return Promise.all([
@@ -99,9 +175,14 @@ const userServices = {
           restaurantId
         })
       })
-      .then(() => cb(null))
+      .then(restaurant => cb(null, {
+        status: 'success',
+        message: '成功新增收藏餐廳',
+        restaurant
+      }))
       .catch(err => cb(err))
   },
+  // DELETE favorite/:restaurantId
   removeFavorite: (req, cb) => {
     return Favorite.findOne({
       where: {
@@ -114,16 +195,26 @@ const userServices = {
 
         return favorite.destroy()
       })
-      .then(() => cb(null))
+      .then(restaurant => cb(null, {
+        status: 'success',
+        message: '成功移除收藏餐廳',
+        restaurant
+      }))
       .catch(err => cb(err))
   },
+  // POST like/:restaurantId
   addLike: (req, cb) => {
     const { restaurantId } = req.params
     const userId = req.user.id
     return Like.findOrCreate({ where: { userId, restaurantId } })
-      .then(() => cb(null))
+      .then(like => cb(null, {
+        status: 'success',
+        message: '成功新增喜歡餐廳',
+        like
+      }))
       .catch(err => cb(err))
   },
+  // DELETE like/:restaurantId
   removeLike: (req, cb) => {
     return Like.destroy({
       where: {
@@ -133,27 +224,35 @@ const userServices = {
     })
       .then(like => {
         if (!like) throw new Error("You haven't liked this restaurant")
-        cb(null)
+        cb(null, {
+          status: 'success',
+          message: '成功移除喜歡餐廳',
+          like
+        })
       })
       .catch(err => cb(err))
   },
+  // GET users/top
   getTopUsers: (req, cb) => {
-    const reqUser = getUser(req)
+    const reqUserId = getUser(req).id
     return User.findAll({
-      include: [{ model: User, as: 'Followers' }]
+      include: [{ model: User, as: 'Followers' }],
+      attributes: { exclude: ['password', 'createdAt', 'updatedAt'] }
     })
       .then(users => {
         const result = users
-          .map(user => ({
-            ...user.toJSON(),
-            followerCount: user.Followers.length,
-            isFollowed: req.user.Followings.some(f => f.id === user.id)
-          }))
+          .map(user => {
+            const { Followers, ...data } = user.toJSON()
+            data.followerCount = user.Followers.length
+            data.isFollowed = req.user.Followings.some(f => f.id === user.id)
+            return data
+          })
           .sort((a, b) => b.followerCount - a.followerCount)
-        cb(null, { users: result, reqUser })
+        cb(null, { result, reqUserId })
       })
       .catch(err => cb(err))
   },
+  // POST following/:userId
   addFollowing: (req, cb) => {
     const reqUserId = getUser(req).id
     const userId = req.params.userId
@@ -180,9 +279,14 @@ const userServices = {
           })
         }
       })
-      .then(() => cb(null))
+      .then(follow => cb(null, {
+        status: 'success',
+        message: '成功新增追蹤使用者',
+        follow
+      }))
       .catch(err => cb(err))
   },
+  // DELETE following/:userId
   removeFollowing: (req, cb) => {
     Followship.findOne({
       where: {
@@ -194,7 +298,11 @@ const userServices = {
         if (!followship) throw new Error("You haven't followed this user!")
         return followship.destroy()
       })
-      .then(() => cb(null))
+      .then(follow => cb(null, {
+        status: 'success',
+        message: '成功移除追蹤使用者',
+        follow
+      }))
       .catch(err => cb(err))
   }
 }
