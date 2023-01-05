@@ -10,12 +10,16 @@ router.post('/restaurants', upload.single('image'), adminController.postRestaura
 router.delete('/restaurants/:id', adminController.deleteRestaurant)
 router.get('/restaurant/:id', adminController.getRestaurant)
 router.put('/restaurants/:id', upload.single('image'), adminController.putRestaurant)
+
 router.get('/users', adminController.getUsers)
 router.patch('/users/:id', adminController.patchUser)
+
 router.get('/categories', categoryController.getCategories)
+router.get('/categories/:id', categoryController.getCategory)
 router.post('/categories', categoryController.postCategory)
 router.put('/categories/:id', categoryController.putCategory)
 router.delete('/categories/:id', categoryController.deleteCategory)
+
 router.delete('/comments/:id', commentController.deleteComment)
 
 module.exports = router

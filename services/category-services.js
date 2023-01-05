@@ -1,17 +1,20 @@
 const { Category, Restaurant } = require('../models')
 
 const categoryController = {
+  // GET admin/categories 取得所有分類
   getCategories: (req, cb) => {
-    return Promise.all([
-      Category.findAll({ raw: true }),
-      req.params.id ? Category.findByPk(req.params.id, { raw: true }) : null
-    ])
-      .then(([categories, category]) => cb(null, {
-        categories,
-        category
-      }))
+    Category.findAll({ raw: true })
+
+      .then(categories => cb(null, categories))
       .catch(err => cb(err))
   },
+  // GET admin/categories/:id 取得單筆分類
+  getCategory: (req, cb) => {
+    Category.findByPk(req.params.id, { raw: true })
+      .then(category => cb(null, category))
+      .catch(err => cb(err))
+  },
+  // POST admin/categories 新增分類
   postCategory: (req, cb) => {
     const { name } = req.body
     if (!name) throw new Error('Category name is required!')
@@ -29,12 +32,21 @@ const categoryController = {
       }))
       .catch(err => cb(err))
   },
+  // PUT admin/categories/:id 修改分類
   putCategory: (req, cb) => {
     const { name } = req.body
     if (!name) throw new Error('Category name is required!')
-    return Category.findByPk(req.params.id)
-      .then(category => {
+    Promise.all([
+      Category.findOne({
+        attributes: ['name'],
+        where: { name }
+      }),
+      Category.findByPk(req.params.id)
+    ])
+      .then(([oneCategory, category]) => {
+        if (oneCategory) throw new Error('Category name is used')
         if (!category) throw new Error("Category doesn't exist!")
+        if (category.name === '未分類') throw new Error("The category can't revise!")
         return category.update({ name })
       })
       .then(category => cb(null, {
@@ -43,6 +55,7 @@ const categoryController = {
       }))
       .catch(err => cb(err))
   },
+  // DELETE admin/categories/:id 刪除分類
   deleteCategory: (req, cb) => {
     const categoryId = req.params.id
     const unCategoryId = '1'
