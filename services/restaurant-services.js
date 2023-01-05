@@ -1,29 +1,19 @@
 const { Restaurant, Category, sequelize, Comment, User } = require('../models')
-const { getOffset, getPagination } = require('../helpers/pagination-helper')
+const { getOffset } = require('../helpers/pagination-helper')
 const restaurantServices = {
+  // GET restaurants 取得所有餐廳
   getRestaurants: (req, cb) => {
-    const sortTab = [
-      {
-        name: '話題餐廳'
-      },
-      {
-        name: '熱門餐廳'
-      }
-    ]
-    const sortTabName = req.query.tab || ''
+    const DEFAULT_PAGE = 1
     const DEFAULT_LIMIT = 9
-    const page = Number(req.query.page) || 1
+    const page = Number(req.query.page) || DEFAULT_PAGE
     const limit = Number(req.query.limit) || DEFAULT_LIMIT
     const offset = getOffset(limit, page)
     const categoryId = Number(req.query.categoryId) || ''
     return Promise.all([
       Restaurant.findAndCountAll({
-        include: [
-          Category,
-          Comment
-        ],
+        include: [Category],
         where: {
-          ...categoryId ? { categoryId } : {}
+          ...categoryId ? { categoryId } : ''
         },
         attributes: {
           include: [
@@ -38,34 +28,35 @@ const restaurantServices = {
           [sequelize.literal('CommentsCount'), 'Desc']
         ],
         limit,
-        offset,
-        nest: true,
-        raw: true
-      }),
-      Category.findAll({ raw: true })
+        offset
+      })
     ])
-      .then(([restaurants, categories]) => {
+      .then(restaurants => {
+        // 透過 req.user 帶入收藏餐廳的id
         const favoritedRestaurantsId = req.user?.FavoritedRestaurants ? req.user.FavoritedRestaurants.map(fr => fr.id) : []
+        // 比對是否收藏
+        const isFavorited = restaurants[0].rows.some(restaurant => restaurant.id === favoritedRestaurantsId)
+        // 透過 req.user 帶入喜歡餐廳的id
         const likedRestaurantsId = req.user?.LikedRestaurants ? req.user.LikedRestaurants.map(lr => lr.id) : []
-        const data = restaurants.rows.map(r => ({
-          ...r,
-          description: r.description.substring(0, 50),
-          isFavorited: favoritedRestaurantsId.includes(r.id),
-          isLiked: likedRestaurantsId.includes(r.id)
-        }))
-        const set = new Set()
-        const result = data.filter(item => !set.has(item.id) ? set.add(item.id) : false)
+        // 比對是否喜歡
+        const isLiked = restaurants[0].rows.some(restaurant => restaurant.id === likedRestaurantsId)
+        const result = restaurants[0].rows.map(restaurant => {
+          const { Category, ...data } = restaurant.toJSON()
+          data.categoryName = Category.name
+          data.isFavorited = isFavorited
+          data.isLiked = isLiked
+          return data
+        })
         return cb(null, {
-          restaurants: result,
-          categories,
-          categoryId,
-          pagination: getPagination(limit, page, restaurants.count),
-          sortTab,
-          sortTabName
+          count: restaurants[0].count,
+          page: page,
+          limit: limit,
+          restaurants: result
         })
       })
       .catch(err => cb(err))
   },
+  // GET restaurants/:id 取得單筆餐廳
   getRestaurant: (req, cb) => {
     return Restaurant.findByPk(req.params.id, {
       include: [
@@ -83,16 +74,17 @@ const restaurantServices = {
       order: [[Comment, 'created_at', 'Desc']]
     })
       .then(restaurant => {
-        const { Category, FavoritedUsers, LikedUsers, ...data } = restaurant.toJSON()
+        if (!restaurant) throw new Error("Restaurant didn't exist!")
+        const { Category, FavoritedUsers, LikedUsers, Comments, ...data } = restaurant.toJSON()
         data.isFavorited = restaurant.FavoritedUsers.some(f => f.id === req.user.id)
         data.isLiked = restaurant.LikedUsers.some(f => f.id === req.user.id)
         data.categoryName = Category.name
-        if (!restaurant) throw new Error("Restaurant didn't exist!")
         restaurant.increment('viewCounts')
-        return cb(null, { restaurant: data })
+        return cb(null, data)
       })
       .catch(err => cb(err))
   },
+  // GET restaurants/top 取得人氣餐廳
   getTopRestaurants: (req, cb) => {
     return Restaurant.findAll({
       limit: 10,
@@ -116,44 +108,27 @@ const restaurantServices = {
             ...restaurant.toJSON(),
             isFavorited: favoritedRestaurantsId.includes(restaurant.id)
           }))
-        return cb(null, { restaurants: result })
+        return cb(null, result)
       })
       .catch(err => cb(err))
   },
-  getFeeds: (req, cb) => {
-    return Promise.all([
-      Restaurant.findAll({
-        limit: 10,
-        order: [['createdAt', 'DESC']],
-        include: [Category],
-        raw: true,
-        nest: true
-      }),
-      Comment.findAll({
-        limit: 10,
-        order: [['createdAt', 'DESC']],
-        include: [
-          {
-            model: User,
-            attributes: { exclude: ['password', 'createdAt', 'updatedAt'] }
-          },
-          { model: Restaurant, attributes: ['name'] }
-        ],
-        raw: true,
-        nest: true
-      })
-    ])
-      .then(([restaurants, comments]) => {
-        const restaurantsResult =
+  // GET restaurants/feeds 取得餐廳最新動態
+  getRestaurantFeeds: (req, cb) => {
+    const DEFAULT_LIMIT = 10
+    const RestaurantFeedsLimit = Number(req.query.limit) || DEFAULT_LIMIT
+    Restaurant.findAll({
+      limit: RestaurantFeedsLimit,
+      order: [['createdAt', 'DESC']],
+      include: [Category]
+    })
+      .then(restaurants => {
+        const result =
           restaurants.map(restaurant => {
-            const { Category, ...data } = restaurant
+            const { Category, ...data } = restaurant.toJSON()
             data.categoryName = Category.name
             return data
           })
-        return cb(null, {
-          restaurants: restaurantsResult,
-          comments
-        })
+        return cb(null, result)
       })
       .catch(err => cb(err))
   }

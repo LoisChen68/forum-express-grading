@@ -10,8 +10,8 @@ const restaurantController = {
   getTopRestaurants: (req, res, next) => {
     restaurantServices.getTopRestaurants(req, (err, data) => err ? next(err) : res.json(data))
   },
-  getFeeds: (req, res, next) => {
-    restaurantServices.getFeeds(req, (err, data) => err ? next(err) : res.json(data))
+  getRestaurantFeeds: (req, res, next) => {
+    restaurantServices.getRestaurantFeeds(req, (err, data) => err ? next(err) : res.json(data))
   }
 }
 module.exports = restaurantController

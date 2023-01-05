@@ -13,6 +13,9 @@ const commentController = {
   // 取得單筆留言
   editComment: (req, res, next) => {
     commentServices.editComment(req, (err, data) => err ? next(err) : res.json(data))
+  },
+  getCommentFeeds: (req, res, next) => {
+    commentServices.getCommentFeeds(req, (err, data) => err ? next(err) : res.json(data))
   }
 }
 

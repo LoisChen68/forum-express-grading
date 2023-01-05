@@ -55,6 +55,23 @@ const commentController = {
         cb(null, { status: 'success', comment })
       })
       .catch(err => cb(err))
+  },
+  getCommentFeeds: (req, cb) => {
+    const DEFAULT_LIMIT = 10
+    const CommentFeedsLimit = Number(req.query.limit) || DEFAULT_LIMIT
+    Comment.findAll({
+      limit: CommentFeedsLimit,
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: User,
+          attributes: { exclude: ['password', 'createdAt', 'updatedAt'] }
+        },
+        { model: Restaurant, attributes: ['name'] }
+      ]
+    })
+      .then(comments => cb(null, comments))
+      .catch(err => cb(err))
   }
 }
 module.exports = commentController
