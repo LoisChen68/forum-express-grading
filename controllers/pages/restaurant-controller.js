@@ -1,5 +1,7 @@
 const { Restaurant, Category, Comment, User, sequelize } = require('../../models')
 const { getOffset, getPagination } = require('../../helpers/pagination-helper')
+const { getUser } = require('../../helpers/auth-helpers')
+
 const restaurantController = {
   getRestaurants: (req, res, next) => {
     const sortTab = [
@@ -68,6 +70,7 @@ const restaurantController = {
       .catch(err => next(err))
   },
   getRestaurant: (req, res, next) => {
+    const reqUser = getUser(req)
     return Restaurant.findByPk(req.params.id, {
       include: [
         Category,
@@ -90,7 +93,7 @@ const restaurantController = {
         data.categoryName = Category.name
         if (!restaurant) throw new Error("Restaurant didn't exist!")
         restaurant.increment('viewCounts')
-        return res.render('restaurant', { restaurant: data })
+        return res.render('restaurant', { restaurant: data, reqUser })
       })
       .catch(err => next(err))
   },

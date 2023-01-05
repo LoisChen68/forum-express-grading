@@ -1,5 +1,6 @@
 const { Comment, User, Restaurant } = require('../models')
 const commentController = {
+  // POST comment 新增評論
   postComment: (req, cb) => {
     const { restaurantId, text } = req.body
     const userId = req.user.id
@@ -20,6 +21,7 @@ const commentController = {
       .then(comment => cb(null, { status: 'success', comment }))
       .catch(err => cb(err))
   },
+  // DELETE comments/:id 刪除評論
   deleteComment: (req, cb) => {
     return Comment.findByPk(req.params.id)
       .then(comment => {
@@ -33,6 +35,7 @@ const commentController = {
       }))
       .catch(err => cb(err))
   },
+  // GET comments/:id 取得單則評論
   editComment: (req, cb) => {
     return Comment.findByPk(req.params.id, { raw: true })
       .then(comment => {
@@ -41,6 +44,7 @@ const commentController = {
       })
       .catch(err => cb(err))
   },
+  // PUT comments/:id 修改評論
   putComment: (req, cb) => {
     const { text } = req.body
     return Comment.findByPk(req.params.id)
@@ -51,11 +55,11 @@ const commentController = {
         })
       })
       .then(comment => {
-        req.flash('success_messages', 'comment was successfully to update')
         cb(null, { status: 'success', comment })
       })
       .catch(err => cb(err))
   },
+  // GET comments/feeds 取得最新評論 預設10筆
   getCommentFeeds: (req, cb) => {
     const DEFAULT_LIMIT = 10
     const CommentFeedsLimit = Number(req.query.limit) || DEFAULT_LIMIT

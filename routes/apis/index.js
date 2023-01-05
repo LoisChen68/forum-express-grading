@@ -24,7 +24,7 @@ router.get('/restaurants/feeds', authenticated, restController.getRestaurantFeed
 router.get('/restaurants', authenticated, restController.getRestaurants)
 router.get('/restaurants/:id', authenticated, restController.getRestaurant)
 
-router.get('/comment/feeds', authenticated, commentController.getCommentFeeds)
+router.get('/comments/feeds', authenticated, commentController.getCommentFeeds)
 router.get('/comments/:id', authenticated, commentController.editComment)
 router.post('/comments', authenticated, commentController.postComment)
 router.put('/comments/:id', authenticated, commentController.putComment)
