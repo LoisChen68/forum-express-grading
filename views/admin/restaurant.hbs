@@ -1,32 +1,32 @@
 <div class="row">
   <div class="col-md-12">
-    <h1>{{restaurant.name}}</h1>
-    <td>{{restaurant.categoryName}}</td>
+    <h1>{{name}}</h1>
+    <td>{{categoryName}}</td>
   </div>
   <div class="col-md-4">
-    <img class="img-responsive center-block" src="{{restaurant.image}}"
+    <img class="img-responsive center-block" src="{{image}}"
       style="width: 250px; margin-bottom: 25px; transition: opacity 0.5s; opacity:0;" onload="this.style.opacity=1;">
     <br>
     <div class="well">
       <ul class="list-unstyled">
-        <li><strong>Opening Hour:</strong> {{restaurant.openingHours}}</li>
-        <li><strong>Tel:</strong> {{restaurant.tel}}</li>
-        <li><strong>Address:</strong> {{restaurant.address}}</li>
+        <li><strong>Opening Hour:</strong> {{openingHours}}</li>
+        <li><strong>Tel:</strong> {{tel}}</li>
+        <li><strong>Address:</strong> {{address}}</li>
       </ul>
     </div>
   </div>
   <div class="col-md-8">
-    <p style="white-space: break-spaces;">{{restaurant.description}}</p>
+    <p style="white-space: break-spaces;">{{description}}</p>
   </div>
   <hr>
 </div>
 <a class="btn btn-outline-secondary" href="javascript:history.back()">Back</a>
 <button type="button" class="btn btn-link">
-  <a class="btn btn-outline-primary" href="/admin/restaurants/{{restaurant.id}}/edit">
+  <a class="btn btn-outline-primary" href="/admin/restaurants/{{id}}/edit">
     Edit
   </a>
 </button>
-<form action="/admin/restaurants/{{restaurant.id}}?_method=DELETE" method="POST" style="display: inline;">
+<form action="/admin/restaurants/{{id}}?_method=DELETE" method="POST" style="display: inline;">
   <button type="submit" class="btn btn-outline-danger"
     onclick="return confirm(`確定要刪除 {{ restaurant.name }} 嗎？`)">Delete</button>
 </form>

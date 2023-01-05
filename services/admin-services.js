@@ -1,6 +1,8 @@
 const { Restaurant, Category, User, Comment } = require('../models')
 const { imgurFileHandler } = require('../helpers/file-helpers')
+
 const adminServices = {
+  // GET admin/restaurants Admin後台取得所有餐廳
   getRestaurants: (req, cb) => {
     Restaurant.findAll({
       include: [Category]
@@ -12,13 +14,15 @@ const adminServices = {
             data.categoryName = Category.name
             return data
           })
-        cb(null, { restaurants: result })
+        cb(null, result)
       })
       .catch(err => cb(err))
   },
+  // POST admin/restaurants Admin後台新增餐廳
   postRestaurant: (req, cb) => {
     const { name, tel, address, openingHours, description, categoryId } = req.body
     if (!name) throw new Error('Restaurant name is required!')
+
     const { file } = req
     imgurFileHandler(file)
       .then(filePath => Restaurant.create({
@@ -32,10 +36,12 @@ const adminServices = {
       }))
       .then(newRestaurant => cb(null, {
         states: 'success',
+        message: '成功新增餐廳',
         restaurant: newRestaurant
       }))
       .catch(err => cb(err))
   },
+  // DELETE admin/restaurants/:id Admin後台刪除餐廳
   deleteRestaurant: (req, cb) => {
     const restaurantId = req.params.id
     Restaurant.findByPk(restaurantId)
@@ -49,7 +55,7 @@ const adminServices = {
       })
       .then(deletedRestaurant => cb(null, {
         status: 'success',
-        message: '刪除成功',
+        message: '成功刪除餐廳',
         restaurant: deletedRestaurant
       }))
       // 刪除關聯的餐廳評論
@@ -58,13 +64,7 @@ const adminServices = {
       })
       .catch(err => cb(err))
   },
-  createRestaurant: (req, cb) => {
-    return Category.findAll({
-      raw: true
-    })
-      .then(categories => cb(null, { categories }))
-      .catch(err => cb(err))
-  },
+  // GET admin/restaurants/:id Admin後台取得單筆餐廳
   getRestaurant: (req, cb) => {
     Restaurant.findByPk(req.params.id, {
       raw: true,
@@ -75,21 +75,11 @@ const adminServices = {
         if (!restaurant) throw new Error("Restaurant didn't exist!")
         const { Category, ...data } = restaurant
         data.categoryName = Category.name
-        cb(null, { restaurant: data })
+        cb(null, data)
       })
       .catch(err => cb(err))
   },
-  editRestaurant: (req, cb) => {
-    return Promise.all([
-      Restaurant.findByPk(req.params.id, { raw: true }),
-      Category.findAll({ raw: true })
-    ])
-      .then(([restaurant, categories]) => {
-        if (!restaurant) throw new Error("Restaurant didn't exist!")
-        cb(null, { restaurant, categories })
-      })
-      .catch(err => cb(err))
-  },
+  // PUT admin/restaurants/:id Admin後台修改餐廳
   putRestaurant: (req, cb) => {
     const { name, tel, address, openingHours, description, categoryId } = req.body
     const restaurantId = req.params.id
@@ -112,18 +102,24 @@ const adminServices = {
         })
       })
       .then(restaurant => {
-        cb(null, { status: 'success', restaurant })
+        cb(null, {
+          status: 'success',
+          message: '成功修改餐廳',
+          restaurant
+        })
       })
       .catch(err => cb(err))
   },
+  // GET admin/users Admin後台取得所有使用者
   getUsers: (req, cb) => {
     return User.findAll({ raw: true })
 
       .then(users =>
-        cb(null, { users }))
+        cb(null, users))
 
       .catch(err => cb(err))
   },
+  // PATCH admin/users Admin後台修改使用者權限
   patchUser: (req, cb) => {
     return User.findByPk(req.params.id)
       .then(user => {

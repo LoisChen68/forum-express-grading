@@ -45,6 +45,7 @@ const categoryController = {
     ])
       .then(([oneCategory, category]) => {
         if (oneCategory) throw new Error('Category name is used')
+        if (oneCategory) req.flash('error_message', 'Category name is used')
         if (!category) throw new Error("Category doesn't exist!")
         if (category.name === '未分類') throw new Error("The category can't revise!")
         return category.update({ name })
