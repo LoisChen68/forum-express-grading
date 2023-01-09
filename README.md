@@ -1,52 +1,27 @@
-# README
+# 餐廳論壇
 
-1. Fork
-2. git clone
 
-## 初始化
-### Initialize
-```
-git remote add upstream https://github.com/ALPHACamp/forum-express-grading.git  # 建立上游連線
-npm install
-```
+### 介紹
+這是一個使用 Node.js 及 Express 並使用 Handlebars 製作全端網頁，另外將共用邏輯拉至 services 開發 API 供外部使用。
 
-### 設定資料庫
-需要與 config/config.json 一致
+### [API Doc](https://www.notion.so/API-389a98b9bfa749f69df76b192afb8c83)
 
-```
-create database forum;
-```
+## 使用者故事
+### 前台
+- 使用者可以註冊/登入/登出網站
+- 使用者可以在瀏覽所有餐廳與個別餐廳詳細資料
+- 在瀏覽所有餐廳資料時，可以用分類篩選餐廳
+- 使用者可以對餐廳留下評論
+- 使用者可以收藏餐廳
+- 使用者可以查看最新上架的 10 筆餐廳
+- 使用者可以查看最新的 10 筆評論
+- 使用者可以編輯自己的個人資料
+- 使用者可以查看自己評論過、收藏過的餐廳
+- 使用者可以追蹤其他的使用者
+- 使用者可以查看自己追蹤中的使用者與正在追蹤自己的使用者 
 
-### 執行測試
-```
-npm run test
-```
-
-## 下載作業規格
-以 R01 為例
-
-```
-git checkout -b R01           # 開新分支
-git merge origin/R01-test     # 下載作業規格
-npm run test                  # 直到綠燈全亮
-
-git add .
-git commit -m "...."
-```
-
-## 繳交作業
-
-```
-git push origin R01           # 上傳本地進度
-```
-
-接著改成到 GitHub 來發 PR。
-
-## 共用帳號
-請一律設定下面 2 組帳號以利驗收：
-* 第一組帳號有 admin 權限：
-  * email: root@example.com
-  * password: 12345678
-* 第二組帳號沒有 admin 權限：
-  * email: user1@example.com
-  * password: 12345678
+### 後台
+- 只有網站管理者可以登入網站後台
+- 網站管理者可以在後台管理餐廳的基本資料
+- 網站管理者可以在後台管理餐廳分類
+- 網站管理者可以在後台管理使用者的權限
