@@ -1,6 +1,9 @@
 const commentServices = require('../../services/comment-services')
 
 const commentController = {
+  getComments: (req, res, next) => {
+    commentServices.getComments(req, (err, data) => err ? next(err) : res.json(data))
+  },
   postComment: (req, res, next) => {
     commentServices.postComment(req, (err, data) => err ? next(err) : res.json(data))
   },

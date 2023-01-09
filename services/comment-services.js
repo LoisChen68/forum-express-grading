@@ -1,5 +1,14 @@
 const { Comment, User, Restaurant } = require('../models')
+const { getUser } = require('../helpers/auth-helpers')
 const commentController = {
+  getComments: (req, cb) => {
+    const restaurantId = req.params.restaurantId
+    Comment.findAll({
+      where: { restaurantId }
+    })
+      .then(comments => cb(null, comments))
+      .catch(err => cb(err))
+  },
   // POST comment 新增評論
   postComment: (req, cb) => {
     const { restaurantId, text } = req.body
@@ -46,6 +55,7 @@ const commentController = {
   },
   // PUT comments/:id 修改評論
   putComment: (req, cb) => {
+    const reqUserId = getUser(req).id
     const { text } = req.body
     return Comment.findByPk(req.params.id)
       .then(comment => {
@@ -55,6 +65,7 @@ const commentController = {
         })
       })
       .then(comment => {
+        if (comment.userId !== reqUserId) throw new Error('不具權限！')
         cb(null, { status: 'success', comment })
       })
       .catch(err => cb(err))

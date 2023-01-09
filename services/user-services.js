@@ -4,7 +4,7 @@ const { getUser } = require('../helpers/auth-helpers')
 const { imgurFileHandler } = require('../helpers/file-helpers')
 
 const userServices = {
-  // POST sign
+  // POST signUp
   signUp: (req, cb) => {
     if (req.body.password !== req.body.passwordCheck) throw new Error('Passwords do not match!')
 
@@ -19,7 +19,10 @@ const userServices = {
         image: `https://loremflickr.com/320/240/user,icon/?random=${Math.random() * 100}`,
         password: hash
       }))
-      .then(newUser => cb(null, { user: newUser }))
+      .then(user => {
+        const { password, ...data } = user.toJSON()
+        cb(null, data)
+      })
       .catch(err => cb(err))
   },
   // GET users/:id/favorite
@@ -248,7 +251,7 @@ const userServices = {
             return data
           })
           .sort((a, b) => b.followerCount - a.followerCount)
-        cb(null, { result, reqUserId })
+        cb(null, { users: result, reqUserId })
       })
       .catch(err => cb(err))
   },

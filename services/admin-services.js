@@ -1,20 +1,34 @@
 const { Restaurant, Category, User, Comment } = require('../models')
 const { imgurFileHandler } = require('../helpers/file-helpers')
+const { getOffset } = require('../helpers/pagination-helper')
 
 const adminServices = {
   // GET admin/restaurants Admin後台取得所有餐廳
   getRestaurants: (req, cb) => {
-    Restaurant.findAll({
-      include: [Category]
+    const DEFAULT_PAGE = 1
+    const DEFAULT_LIMIT = 9
+    const page = Number(req.query.page) || DEFAULT_PAGE
+    const limit = Number(req.query.limit) || DEFAULT_LIMIT
+    const offset = getOffset(limit, page)
+    Restaurant.findAndCountAll({
+      include: [Category],
+      limit,
+      offset
     })
       .then(restaurants => {
         const result =
-          restaurants.map(restaurant => {
+          restaurants.rows.map(restaurant => {
             const { Category, ...data } = restaurant.toJSON()
             data.categoryName = Category.name
             return data
           })
-        cb(null, result)
+        cb(null, {
+          count: restaurants.count,
+          page: page,
+          limit: limit,
+          result
+        }
+        )
       })
       .catch(err => cb(err))
   },
@@ -112,11 +126,21 @@ const adminServices = {
   },
   // GET admin/users Admin後台取得所有使用者
   getUsers: (req, cb) => {
-    return User.findAll({ raw: true })
-
-      .then(users =>
-        cb(null, users))
-
+    const DEFAULT_PAGE = 1
+    const DEFAULT_LIMIT = 9
+    const page = Number(req.query.page) || DEFAULT_PAGE
+    const limit = Number(req.query.limit) || DEFAULT_LIMIT
+    const offset = getOffset(limit, page)
+    User.findAndCountAll({
+      offset,
+      limit
+    })
+      .then(users => cb(null, {
+        count: users.count,
+        page: page,
+        limit: limit,
+        user: users.rows
+      }))
       .catch(err => cb(err))
   },
   // PATCH admin/users Admin後台修改使用者權限
