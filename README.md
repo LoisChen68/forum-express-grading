@@ -25,3 +25,45 @@
 - 網站管理者可以在後台管理餐廳的基本資料
 - 網站管理者可以在後台管理餐廳分類
 - 網站管理者可以在後台管理使用者的權限
+
+### install
+- clone 此專案
+```
+git clone https://github.com/LoisChen68/forum-express-grading.git
+```
+
+- 安裝 package
+```
+npm install
+```
+
+- 至 `/config/config.json` 設定資料庫
+``` javascript
+  "development": {
+    "username": "username",
+    "password": "password",
+    "database": "database",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+```
+
+- 建立資料庫
+```
+npx sequelize db:migrate
+```
+
+- 建立種子資料
+```
+npx sequelize db:seed:all
+```
+
+- 啟動伺服器
+```
+npm run dev
+```
+- 會在終端機看到
+```
+Example app listening on port ${port}!
+```
+代表成功啟動伺服器
