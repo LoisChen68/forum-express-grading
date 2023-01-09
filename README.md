@@ -67,3 +67,16 @@ npm run dev
 Example app listening on port ${port}!
 ```
 代表成功啟動伺服器
+
+### 測試帳號
+- 具有 Admin 權限
+```
+帳號： root@example.com
+密碼： 12345678
+```
+
+- 不具有 Admin 權限
+```
+帳號： user1@example.com
+密碼： 12345678
+```
