@@ -1,12 +1,5 @@
 # 餐廳論壇
 
-
-Demo：https://quiet-snow-9703.fly.dev/signin
-
-帳號：root@example.com
-
-密碼：12345678
-
 ### 介紹
 這是一個使用 Node.js 及 Express 並使用 Handlebars 製作全端網頁，另外將共用邏輯拉至 services 開發 API 供外部使用。
 
